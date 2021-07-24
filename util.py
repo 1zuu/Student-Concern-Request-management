@@ -5,8 +5,11 @@ import numpy as np
 import pandas as pd
 from wordcloud import WordCloud
 from nltk.corpus import stopwords
+from collections import defaultdict
+from matplotlib import pyplot as plt
 from nltk.stem import WordNetLemmatizer
 from nltk.tokenize import RegexpTokenizer
+from sklearn.preprocessing import LabelEncoder
 
 from variables import*
 
@@ -22,7 +25,7 @@ def word2vector():
                 word2vec[word] = np.array(list(map(float,vec)))
 
         file_ = open(word2vec_path,'wb')
-        pickle.dump(word2vec, file_)
+        pickle.dump(word2vec, file_, protocol=pickle.HIGHEST_PROTOCOL)
         file_.close()
         print("Word2vec.pickle Saved!")
     else:
@@ -34,7 +37,7 @@ def word2vector():
 
 def lemmatization(lemmatizer,sentence):
     '''
-        Lematize texts in the terms
+        Lemmatize texts in the terms
     '''
     lem = [lemmatizer.lemmatize(k) for k in sentence]
     lem = list(dict.fromkeys(lem))
@@ -76,8 +79,60 @@ def preprocessed_data(reviews):
 
     return np.array(updated_reviews)
 
+def process_labels(df):
+    df_labels = df[['Department', 'Sub-section', 'Concern Type']]
+    df_labels = df_labels.apply(lambda x: x.astype(str).str.lower())
+    df_labels = df_labels.apply(lambda x: x.astype(str).str.strip())
+
+    df_labels = label_encoding(df_labels)
+    df[['Department', 'Sub-section', 'Concern Type']] = df_labels
+    return df
+
+
+def label_encoding(df_cat):
+    if not os.path.exists(encoder_dict_path):
+        encoder_dict = defaultdict(LabelEncoder)
+        encoder = df_cat.apply(lambda x: encoder_dict[x.name].fit_transform(x))
+        encoder.apply(lambda x: encoder_dict[x.name].inverse_transform(x))
+        with open(encoder_dict_path, 'wb') as handle:
+            pickle.dump(encoder_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+    else:
+        with open(encoder_dict_path, 'rb') as handle:
+            encoder_dict = pickle.load(handle)
+    return df_cat.apply(lambda x: encoder_dict[x.name].transform(x))
+
+def create_wordcloud(processed_concerns):
+    long_string = ','.join(list(processed_concerns))
+    wordcloud = WordCloud(
+                        width=1600, 
+                        height=800, 
+                        max_words=200, 
+                        background_color='white',
+                        max_font_size=200, 
+                        random_state=seed
+                        )
+    wordcloud.generate(long_string)
+    plt.imshow(wordcloud, interpolation='bilinear')
+    plt.axis("off")
+    plt.title("WordCloud Distribution of Student Concerns")
+    plt.savefig(wordcloud_path)
+    plt.show()
+
 def get_data():
     df = pd.read_csv(data_path)
+    del df['ID']
     df = df.dropna(axis=0)
-    student_concerns = df['student_concerns'].values
-    print(student_concerns)
+    df = process_labels(df)
+
+    student_concerns = df['Student Concern'].values
+    processed_concerns = preprocessed_data(student_concerns)
+    create_wordcloud(processed_concerns)
+
+    departments = df['Department'].values
+    sub_sections = df['Sub-section'].values
+    concern_types = df['Concern Type'].values
+
+    return processed_concerns, departments, sub_sections, concern_types
+
+get_data()
