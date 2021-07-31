@@ -3,10 +3,12 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 import re
 import pickle
+import sqlalchemy
 import numpy as np
 import pandas as pd
 from wordcloud import WordCloud
 from nltk.corpus import stopwords
+from sqlalchemy import create_engine
 from matplotlib import pyplot as plt
 from nltk.stem import WordNetLemmatizer
 from nltk.tokenize import RegexpTokenizer
@@ -183,12 +185,21 @@ def word_embeddings(pad_concerns, word2index):
                     embedding_concerns[i,j,:] = word2vec[word]
     return embedding_concerns
 
-def get_data():
-    df = pd.read_csv(data_path, encoding= 'unicode_escape')
-    df = df.dropna(axis=0)
-    df = process_labels(df)
+def create_database(engine):
+    engine = create_engine(db_url)
+    if table_name not in sqlalchemy.inspect(engine).get_table_names():
+        data = pd.read_csv(data_path, encoding= 'unicode_escape')
+        data = data.dropna(axis=0)
+        with engine.connect() as conn, conn.begin():
+            data.to_sql(table_name, conn, if_exists='append', index=False)
 
-    student_concerns = df['Student Concern'].values
+def get_data():
+    engine = create_engine(db_url)
+    create_database(engine)
+    data = pd.read_sql_table(table_name, engine)
+    data = process_labels(data)
+
+    student_concerns = data['Student Concern'].values
     processed_concerns = preprocessed_data(student_concerns)
     
     word2index = derive_vocabulary(processed_concerns)
@@ -197,9 +208,9 @@ def get_data():
 
     create_wordcloud(processed_concerns)
 
-    departments = df['Department'].values
-    sub_sections = df['Sub-section'].values
-    concern_types = df['Concern Type'].values
+    departments = data['Department'].values
+    sub_sections = data['Sub-section'].values
+    concern_types = data['Concern Type'].values
 
     return embedding_concerns, departments, sub_sections, concern_types
 

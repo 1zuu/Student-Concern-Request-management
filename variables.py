@@ -12,3 +12,7 @@ wordcloud_path = 'weights_and_data/wordcloud.png'
 data_path = 'weights_and_data/Student Concerns_3.csv'
 
 seed = 42
+username = 'root'
+password = 'root'
+db_url = 'mysql+pymysql://{}:{}@localhost:3306/sms'.format(username,password)
+table_name = 'student_concern_management'
