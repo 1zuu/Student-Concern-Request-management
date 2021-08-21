@@ -32,9 +32,9 @@ def word2vector():
         file_ = open(word2vec_path,'wb')
         pickle.dump(word2vec, file_, protocol=pickle.HIGHEST_PROTOCOL)
         file_.close()
-        print("Word2vec.pickle Saved!")
+        print("glove_vectors.pickle Saved!")
     else:
-        print("Word2vec.pickle Loading!")
+        print("glove_vectors.pickle Loading!")
         file_ = open(word2vec_path,'rb')
         word2vec = pickle.load(file_)
         file_.close()
@@ -85,12 +85,12 @@ def preprocessed_data(concerns):
     return np.array(updated_concerns)
 
 def process_labels(df):
-    df_labels = df[['Department', 'Sub-section', 'Concern Type']]
+    df_labels = df[['Department', 'Sub_Section', 'Concern_Type']]
     df_labels = df_labels.apply(lambda x: x.astype(str).str.lower())
     df_labels = df_labels.apply(lambda x: x.astype(str).str.strip())
 
     df_labels = label_encoding(df_labels)
-    df[['Department', 'Sub-section', 'Concern Type']] = df_labels
+    df[['Department', 'Sub_Section', 'Concern_Type']] = df_labels
     return df
 
 
@@ -170,7 +170,7 @@ def sequence_and_padding_concerns(processed_concerns, word2index):
 
 def word_embeddings(pad_concerns, word2index):
     N = pad_concerns.shape[0]
-    embedding_concerns = np.zeros((N, max_length, n_dim))
+    embedding_concerns = np.zeros((N, max_length, embedding_dim))
 
     index2word = {v:k for k,v in word2index.items()}
 
@@ -199,7 +199,7 @@ def get_data():
     data = pd.read_sql_table(table_name, engine)
     data = process_labels(data)
 
-    student_concerns = data['Student Concern'].values
+    student_concerns = data['Student_Concern'].values
     processed_concerns = preprocessed_data(student_concerns)
     
     word2index = derive_vocabulary(processed_concerns)
@@ -208,10 +208,6 @@ def get_data():
 
     create_wordcloud(processed_concerns)
 
-    departments = data['Department'].values
-    sub_sections = data['Sub-section'].values
-    concern_types = data['Concern Type'].values
+    outputs = data[['Department', 'Sub_Section', 'Concern_Type']].values
 
-    return embedding_concerns, departments, sub_sections, concern_types
-
-get_data()
+    return embedding_concerns, outputs
