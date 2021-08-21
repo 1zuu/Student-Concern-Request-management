@@ -7,6 +7,7 @@ import sqlalchemy
 import numpy as np
 import pandas as pd
 from wordcloud import WordCloud
+from sklearn.utils import shuffle
 from nltk.corpus import stopwords
 from sqlalchemy import create_engine
 from matplotlib import pyplot as plt
@@ -34,7 +35,7 @@ def word2vector():
         file_.close()
         print("glove_vectors.pickle Saved!")
     else:
-        print("glove_vectors.pickle Loading!")
+        # print("glove_vectors.pickle Loading!")
         file_ = open(word2vec_path,'rb')
         word2vec = pickle.load(file_)
         file_.close()
@@ -108,21 +109,22 @@ def label_encoding(df_cat):
     return df_cat.apply(lambda x: encoder_dict[x.name].transform(x))
 
 def create_wordcloud(processed_concerns):
-    long_string = ','.join(list(processed_concerns))
-    wordcloud = WordCloud(
-                        width=1600, 
-                        height=800, 
-                        max_words=200, 
-                        background_color='white',
-                        max_font_size=200, 
-                        random_state=seed
-                        )
-    wordcloud.generate(long_string)
-    plt.imshow(wordcloud, interpolation='bilinear')
-    plt.axis("off")
-    plt.title("WordCloud Distribution of Student Concerns")
-    plt.savefig(wordcloud_path)
-    plt.show()
+    if not os.path.exists(wordcloud_path):
+        long_string = ','.join(list(processed_concerns))
+        wordcloud = WordCloud(
+                            width=1600, 
+                            height=800, 
+                            max_words=200, 
+                            background_color='white',
+                            max_font_size=200, 
+                            random_state=seed
+                            )
+        wordcloud.generate(long_string)
+        plt.imshow(wordcloud, interpolation='bilinear')
+        plt.axis("off")
+        plt.title("WordCloud Distribution of Student Concerns")
+        plt.savefig(wordcloud_path)
+        plt.show()
 
 def derive_vocabulary(processed_concerns):
     '''
@@ -146,6 +148,7 @@ def derive_vocabulary(processed_concerns):
                                         reverse=True)}
     word2index = {k: i+1 for i, (k, v) in enumerate(vocabulary.items())}
     word2index[pad_token] = 0
+    word2index[oov_tok] = len(word2index)
     
     return word2index
 
@@ -155,8 +158,11 @@ def sequence_and_padding_concerns(processed_concerns, word2index):
         seq_concern = []
         concern = concern.split(' ')
         for word in concern:
-            word = word.strip() 
-            seq_concern.append(word2index[word])
+            word = word.strip().lower()
+            if word in word2index: 
+                seq_concern.append(word2index[word])
+            else:
+                seq_concern.append(word2index[oov_tok])
         seq_concerns.append(seq_concern)
 
     pad_concerns = pad_sequences(
@@ -193,21 +199,25 @@ def create_database(engine):
         with engine.connect() as conn, conn.begin():
             data.to_sql(table_name, conn, if_exists='append', index=False)
 
+def text_processing(student_concerns):
+    processed_concerns = preprocessed_data(student_concerns)
+    word2index = derive_vocabulary(processed_concerns)
+    pad_concerns = sequence_and_padding_concerns(processed_concerns, word2index)
+    embedding_concerns = word_embeddings(pad_concerns, word2index)
+    return processed_concerns, embedding_concerns, word2index
+
 def get_data():
     engine = create_engine(db_url)
     create_database(engine)
+
     data = pd.read_sql_table(table_name, engine)
     data = process_labels(data)
 
     student_concerns = data['Student_Concern'].values
-    processed_concerns = preprocessed_data(student_concerns)
-    
-    word2index = derive_vocabulary(processed_concerns)
-    pad_concerns = sequence_and_padding_concerns(processed_concerns, word2index)
-    embedding_concerns = word_embeddings(pad_concerns, word2index)
-
+    processed_concerns, embedding_concerns, word2index = text_processing(student_concerns)
     create_wordcloud(processed_concerns)
 
     outputs = data[['Department', 'Sub_Section', 'Concern_Type']].values
+    embedding_concerns, outputs = shuffle(embedding_concerns, outputs)
 
-    return embedding_concerns, outputs
+    return embedding_concerns, outputs, word2index
