@@ -11,6 +11,7 @@ from sklearn.model_selection import train_test_split
 from tensorflow.keras.models import load_model
 from tensorflow.keras.layers import Input, LSTM, Dense, Bidirectional, Dropout, BatchNormalization
 from tensorflow.keras.models import Model, load_model
+from tensorflow.keras.activations import relu
 
 from variables import *
 from util import*
@@ -61,14 +62,23 @@ class SCRM_Model():
                        size_lstm2,
                        unroll=True
                        ), name='bidirectional_lstm2')(x) # Bidirectional LSTM layer
+                       
         x = Dense(dense1, activation='relu')(x)
-        x = Dense(dense1, activation='relu')(x) 
+        x = Dense(dense1)(x) 
+        x = BatchNormalization()(x)
+        x = relu(x)
         x = Dropout(keep_prob)(x)
+
         x = Dense(dense2, activation='relu')(x) 
-        x = Dense(dense2, activation='relu')(x)
+        x = Dense(dense2)(x)
+        x = BatchNormalization()(x)
+        x = relu(x)
         x = Dropout(keep_prob)(x)
+
         x = Dense(dense3, activation='relu')(x) 
-        x = Dense(dense3, activation='relu', name='features')(x)
+        x = Dense(dense3, name='features')(x)
+        x = BatchNormalization()(x)
+        x = relu(x)
         x = Dropout(keep_prob)(x)
 
         output1 = Dense(output_dim1, activation='softmax', name='Department')(x)
