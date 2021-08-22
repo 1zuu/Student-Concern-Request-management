@@ -218,4 +218,3 @@ class SCRM_Model():
                 self.loading_model(False)
             self.runTFconverter()
         self.runTFinterpreter()
-        # self.extract_features()
