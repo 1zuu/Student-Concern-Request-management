@@ -175,8 +175,10 @@ class SCRM_Model():
             subsection = subsection.squeeze().argmax(axis=-1)
             
             output_data = np.array([department, subsection, concern_type])
+
         else:
             output_data = interpreter.get_tensor(output_details[0]['index'])
+            
         return output_data
 
     def runTFconverter(self):

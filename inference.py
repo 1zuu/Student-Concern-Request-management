@@ -69,13 +69,15 @@ class SCRM_Inference(object):
 
     def nearest_neighbor_model(self):
         if not os.path.exists(n_neighbour_weights):
-            # self.test_features = self.test_features.reshape(self.test_features.shape[0],-1)
+
             self.neighbor = NearestNeighbors(
                                         n_neighbors = n_neighbors,
                                         )
             self.neighbor.fit(self.features)
+
             with open(n_neighbour_weights, 'wb') as file:
                 pickle.dump(self.neighbor, file)
+
         else:
             with open(n_neighbour_weights, 'rb') as file:
                 self.neighbor = pickle.load(file)
@@ -93,18 +95,52 @@ class SCRM_Inference(object):
         categories = self.scrm.runTFliteInference(embedding_concern).squeeze()
         return feature_vector, categories
 
+    @staticmethod
+    def create_df_from_categories(categories):
+        categories = categories.reshape(1, -1)
+        df_pred = pd.DataFrame(
+                        data = categories,
+                        columns=['Department', 'Sub_Section', 'Concern_Type']
+                        )
+        return df_pred
+
+    def apply_inverse_transform(self, categories):
+        df_pred = SCRM_Inference.create_df_from_categories(categories)
+        with open(encoder_dict_path, 'rb') as handle:
+            encoder_dict = pickle.load(handle)
+        df_pred = df_pred.apply(lambda x: encoder_dict[x.name].inverse_transform(x))
+        output = df_pred.values.squeeze().tolist()
+        return output
+
     def predict_best_solution(self, concern):
         feature_vector, categories = self.predict_one(concern)
+
         neighbor = self.neighbor.kneighbors([feature_vector], 1)[1]
         neighbor = neighbor.squeeze()
-        return self.solutions[neighbor]
+
+        categories = self.apply_inverse_transform(categories)
+        return self.solutions[neighbor], categories
+
+    def make_response(self, request):
+        concern = request['concern']
+        solution, categories = self.predict_best_solution(concern)
+
+        response = {
+            'solution': solution,
+            'Department' : categories[0],
+            'Sub_Section' : categories[1],
+            'Concern_Type' : categories[2]
+                }
+
+        return response
 
 inf = SCRM_Inference()
 inf.data_to_features()
 inf.nearest_neighbor_model()
 
-concern = 'Can I join to mulitiple sports teams? '
-solution = inf.predict_best_solution(concern)
+request = {
+    'concern': 'Can I join to mulitiple sports teams? '
+          }
 
-print("concern  : {} ".format(concern))
-print("solution : {} ".format(solution))
+response = inf.make_response(request)
+print(response)
