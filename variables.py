@@ -15,10 +15,15 @@ wordcloud_path = 'data/wordcloud.png'
 data_path = 'data/Student Concerns_5.csv'
 
 seed = 42
+host = '127.0.0.1'
+port = 27017
+database = 'SCRMS'
+db_collection = 'concerns'
+live_collection = 'live_concerns'
 username = 'root'
 password = 'root'
-db_url = 'mysql+pymysql://{}:{}@localhost:3306/SCRMS'.format(username,password)
-table_name = 'concerns'
+# db_url = 'mongodb://{}:{}@{}:{}/{}?authSource=admin'.format(username, password, host, port, database)
+db_url = "mongodb://localhost:27017/"
 
 vocab_size = 1000
 max_length = 30

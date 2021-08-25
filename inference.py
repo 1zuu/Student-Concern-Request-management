@@ -1,24 +1,11 @@
 import os
 
-from sklearn import neighbors
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
-import re
 import pickle
-import sqlalchemy
 import numpy as np
 import pandas as pd
-from wordcloud import WordCloud
-from sklearn.utils import shuffle
-from nltk.corpus import stopwords
-from sqlalchemy import create_engine
-from matplotlib import pyplot as plt
-from nltk.stem import WordNetLemmatizer
-from nltk.tokenize import RegexpTokenizer
-from collections import defaultdict, Counter
-from sklearn.preprocessing import LabelEncoder
 from sklearn.neighbors import NearestNeighbors
-from tensorflow.keras.preprocessing.sequence import pad_sequences
 
 from dnn import SCRM_Model
 from variables import*
@@ -26,7 +13,6 @@ from util import*
 
 class SCRM_Inference(object):
     def __init__(self):
-        self.engine = create_engine(db_url)
         self.scrm = SCRM_Model()
         self.scrm.run()
         self.vocab = self.scrm.word2index
@@ -42,7 +28,7 @@ class SCRM_Inference(object):
 
     def data_to_features(self):
         if not os.path.exists(data_feature_path):
-            data = pd.read_sql_table(table_name, self.engine)
+            data = read_mongo()
             data = data.dropna(axis=0)
 
             student_concerns = data['Student_Concern'].values
@@ -126,6 +112,7 @@ class SCRM_Inference(object):
         solution, categories = self.predict_best_solution(concern)
 
         response = {
+            'concern':concern,
             'solution': solution,
             'Department' : categories[0],
             'Sub_Section' : categories[1],
@@ -134,13 +121,13 @@ class SCRM_Inference(object):
 
         return response
 
-inf = SCRM_Inference()
-inf.data_to_features()
-inf.nearest_neighbor_model()
+# inf = SCRM_Inference()
+# inf.data_to_features()
+# inf.nearest_neighbor_model()
 
-request = {
-    'concern': 'Can I join to mulitiple sports teams? '
-          }
+# request = {
+#     'concern': 'Can I join to mulitiple sports teams? '
+#           }
 
-response = inf.make_response(request)
-print(response)
+# response = inf.make_response(request)
+# print(response)

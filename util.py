@@ -2,14 +2,15 @@ import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 import re
+import json
 import pickle
-import sqlalchemy
+import pandas as pd
 import numpy as np
 import pandas as pd
+from pymongo import MongoClient
 from wordcloud import WordCloud
 from sklearn.utils import shuffle
 from nltk.corpus import stopwords
-from sqlalchemy import create_engine
 from matplotlib import pyplot as plt
 from nltk.stem import WordNetLemmatizer
 from nltk.tokenize import RegexpTokenizer
@@ -191,13 +192,30 @@ def word_embeddings(pad_concerns, word2index):
                     embedding_concerns[i,j,:] = word2vec[word]
     return embedding_concerns
 
-def create_database(engine):
-    engine = create_engine(db_url)
-    if table_name not in sqlalchemy.inspect(engine).get_table_names():
-        data = pd.read_csv(data_path, encoding= 'unicode_escape')
+def connect_mongo():
+    client = MongoClient(db_url)
+    db = client[database]
+    return db
+
+def create_database():
+
+    db = connect_mongo()
+    if db_collection not in db.list_collection_names():
+        coll = db[db_collection]
+        data = pd.read_csv(data_path)
         data = data.dropna(axis=0)
-        with engine.connect() as conn, conn.begin():
-            data.to_sql(table_name, conn, if_exists='append', index=False)
+        payload = json.loads(data.to_json(orient='records'))
+        coll.remove()
+        coll.insert(payload)
+        print('Database created')
+
+def read_mongo():
+    db = connect_mongo()
+    cursor = db[db_collection].find({})
+    df =  pd.DataFrame(list(cursor))
+    del df['_id']
+
+    return df
 
 def text_processing(student_concerns):
     processed_concerns = preprocessed_data(student_concerns)
@@ -207,10 +225,9 @@ def text_processing(student_concerns):
     return processed_concerns, embedding_concerns, word2index
 
 def get_data():
-    engine = create_engine(db_url)
-    create_database(engine)
+    create_database()
 
-    data = pd.read_sql_table(table_name, engine)
+    data = read_mongo()
     data = process_labels(data)
 
     student_concerns = data['Student_Concern'].values
