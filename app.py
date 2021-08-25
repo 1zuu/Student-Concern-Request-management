@@ -70,8 +70,6 @@ def get():
 @app.route("/update", methods=["PATCH"])
 def update():
     try:
-        # cursor = db[live_collection].find().sort([('student_id', -1)]).limit(1)
-        # data = list(cursor)[0]
         data = list(db[live_collection].find())[-1]
         obj_id = str(data["_id"])
 
