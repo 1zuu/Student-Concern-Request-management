@@ -121,13 +121,13 @@ class SCRM_Inference(object):
 
         return response
 
-# inf = SCRM_Inference()
-# inf.data_to_features()
-# inf.nearest_neighbor_model()
+inf = SCRM_Inference()
+inf.data_to_features()
+inf.nearest_neighbor_model()
 
-# request = {
-#     'concern': 'Can I join to mulitiple sports teams? '
-#           }
+request = {
+    'concern': 'Can I join to mulitiple sports teams? '
+          }
 
-# response = inf.make_response(request)
-# print(response)
+response = inf.make_response(request)
+print(response)

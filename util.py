@@ -131,25 +131,34 @@ def derive_vocabulary(processed_concerns):
     '''
         Derive the vocabulary from the processed concerns
     '''
-    vocabulary = {}
-    lengths = []
-    for concern in processed_concerns:
-        concern = concern.split(' ')
-        lengths.append(len(concern))
-        for word in concern:
-            word = word.strip()
-            if word not in vocabulary:
-                vocabulary[word] = 1
-            else:
-                vocabulary[word] += 1
+    if not os.path.exists(vocabulary_path):
+        vocabulary = {}
+        lengths = []
+        for concern in processed_concerns:
+            concern = concern.split(' ')
+            lengths.append(len(concern))
+            for word in concern:
+                word = word.strip()
+                if word not in vocabulary:
+                    vocabulary[word] = 1
+                else:
+                    vocabulary[word] += 1
 
-    vocabulary = {k: v for k, v in sorted(
-                                        vocabulary.items(), 
-                                        key=lambda item: item[1],
-                                        reverse=True)}
-    word2index = {k: i+1 for i, (k, v) in enumerate(vocabulary.items())}
-    word2index[pad_token] = 0
-    word2index[oov_tok] = len(word2index)
+        vocabulary = {k: v for k, v in sorted(
+                                            vocabulary.items(), 
+                                            key=lambda item: item[1],
+                                            reverse=True)}
+        word2index = {k: i+1 for i, (k, v) in enumerate(vocabulary.items())}
+        word2index[pad_token] = 0
+        word2index[oov_tok] = len(word2index)
+
+        file_ = open(vocabulary_path,'wb')
+        pickle.dump(word2index, file_, protocol=pickle.HIGHEST_PROTOCOL)
+        file_.close()
+    else:
+        file_ = open(vocabulary_path,'rb')
+        word2index = pickle.load(file_)
+        file_.close()
     
     return word2index
 

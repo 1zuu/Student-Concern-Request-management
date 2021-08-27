@@ -8,6 +8,7 @@ fmodel_weights = 'weights/feature_model_weights.h5'
 fmodel_converter = 'weights/feature_model_converter.tflite'
 
 data_feature_path = 'weights/features.pickle'
+vocabulary_path = 'weights/vocabulary.pickle'
 
 n_neighbour_weights = 'weights/nearest_neighbour.pickle'
 encoder_dict_path = 'weights/label_encoder dict.pickle'
