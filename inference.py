@@ -59,6 +59,7 @@ class SCRM_Inference(object):
             self.neighbor = NearestNeighbors(
                                         n_neighbors = n_neighbors,
                                         )
+            self.features = self.features.reshape(self.features.shape[0], -1)
             self.neighbor.fit(self.features)
 
             with open(n_neighbour_weights, 'wb') as file:

@@ -1,5 +1,7 @@
-word2vec_path = 'data/glove_vectors.pickle'
-glove_path = 'data/GloveEmbedding/glove.6B/glove.6B.100d.txt'
+word2vec_path = 'weights/glove_vectors.pickle'
+word2vec_zip_path = 'weights/glove_vectors.zip'
+embedding_dim = 50
+glove_path = 'data/GloveEmbedding/glove.6B/glove.6B.{}d.txt'.format(embedding_dim)
 
 model_weights = 'weights/model_weights.h5'
 model_converter = 'weights/model_converter.tflite'
@@ -28,7 +30,6 @@ db_url = "mongodb://localhost:27017/"
 
 vocab_size = 1000
 max_length = 30
-embedding_dim = 100
 trunc_type = 'post'
 padding = 'post'
 oov_tok = "<oov>"
