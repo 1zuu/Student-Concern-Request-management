@@ -1,5 +1,4 @@
-word2vec_path = 'weights/glove_vectors.pickle'
-word2vec_zip_path = 'weights/glove_vectors.zip'
+word2vec_cPickle_path = 'weights/glove_vectors.pbz2'
 embedding_dim = 50
 glove_path = 'data/GloveEmbedding/glove.6B/glove.6B.{}d.txt'.format(embedding_dim)
 

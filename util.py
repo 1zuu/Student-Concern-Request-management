@@ -1,10 +1,12 @@
 import os
-import zipfile
+import bz2
+import pickle
+import _pickle as cPickle
+
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 import re
 import json
-import pickle
 import pandas as pd
 import numpy as np
 import pandas as pd
@@ -22,34 +24,26 @@ from tensorflow.keras.preprocessing.sequence import pad_sequences
 from variables import*
 
 def word2vector():
-    if not os.path.exists(word2vec_zip_path):
-        if not os.path.exists(word2vec_path):
-            word2vec = {}
-            with open(glove_path, encoding="utf8") as lines:
-                for line in lines:
-                    line = re.split('[\n]', line)[0]
-                    line = line.split(' ')
-                    word, vec = line[0], line[1:]
-                    word = word.lower()
-                    word2vec[word] = np.array(list(map(float,vec)))
+    if not os.path.exists(word2vec_cPickle_path):
+        word2vec = {}
+        with open(glove_path, encoding="utf8") as lines:
+            for line in lines:
+                line = re.split('[\n]', line)[0]
+                line = line.split(' ')
+                word, vec = line[0], line[1:]
+                word = word.lower()
+                word2vec[word] = np.array(list(map(float,vec)))
 
-            file_ = open(word2vec_path,'wb')
-            pickle.dump(word2vec, file_, protocol=pickle.HIGHEST_PROTOCOL)
-            file_.close()
+        with bz2.BZ2File(word2vec_cPickle_path, 'w') as f: 
+            cPickle.dump(word2vec, f)
             
-        word2vec_zip = zipfile.ZipFile(word2vec_zip_path, 'w')
-        word2vec_zip.write(word2vec_path, compress_type = zipfile.ZIP_DEFLATED)
-        word2vec_zip.close()
-
-        os.remove(word2vec_path)
-        print("glove_vectors.zip Saved!")
-
     else:
-        print("glove_vectors.zip Loading!")
-        word2vec_zip = zipfile.ZipFile(word2vec_zip_path)
-        data = word2vec_zip.open(word2vec_path)
-        word2vec = pickle.load(data)
+        print("glove_vectors.cpickle Loading!")
+        data = bz2.BZ2File(word2vec_cPickle_path, 'rb')
+        word2vec = cPickle.load(data)
     return word2vec
+
+print(word2vector()['the'])
 
 def lemmatization(lemmatizer,sentence):
     '''
