@@ -44,7 +44,7 @@ class SCRM_Inference(object):
                     name3=student_id
                     )
         else:
-            data = np.load(data_feature_path)
+            data = np.load(data_feature_path, allow_pickle=True)
             features = data['name1']
             solutions = data['name2']
             student_id = data['name3']

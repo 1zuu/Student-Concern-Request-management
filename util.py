@@ -1,7 +1,5 @@
 import os
-import bz2
 import pickle
-import _pickle as cPickle
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
@@ -23,27 +21,24 @@ from tensorflow.keras.preprocessing.sequence import pad_sequences
 
 from variables import*
 
-def word2vector():
-    if not os.path.exists(word2vec_cPickle_path):
+def word2vector(word2index):
+    if not os.path.exists(word2vec_path):
         word2vec = {}
         with open(glove_path, encoding="utf8") as lines:
             for line in lines:
                 line = re.split('[\n]', line)[0]
                 line = line.split(' ')
                 word, vec = line[0], line[1:]
-                word = word.lower()
-                word2vec[word] = np.array(list(map(float,vec)))
+                word = word.lower().strip()
+                if (word in word2index) or (word == 'unk'):
+                    word2vec[word] = np.array(list(map(float,vec)))
 
-        with bz2.BZ2File(word2vec_cPickle_path, 'w') as f: 
-            cPickle.dump(word2vec, f)
+        np.savez(word2vec_path, name1=word2vec)
             
     else:
-        print("glove_vectors.cpickle Loading!")
-        data = bz2.BZ2File(word2vec_cPickle_path, 'rb')
-        word2vec = cPickle.load(data)
+        word2vec = np.load(word2vec_path, allow_pickle=True)
+        word2vec = word2vec['name1'].tolist()
     return word2vec
-
-print(word2vector()['the'])
 
 def lemmatization(lemmatizer,sentence):
     '''
@@ -193,7 +188,8 @@ def word_embeddings(pad_concerns, word2index):
 
     index2word = {v:k for k,v in word2index.items()}
 
-    word2vec = word2vector()
+    word2vec = word2vector(word2index)
+    print(len(word2vec))
     for i, concern in enumerate(pad_concerns):
         for j, index in enumerate(concern):
             word = index2word[index]
