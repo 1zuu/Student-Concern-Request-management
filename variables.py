@@ -13,11 +13,11 @@ vocabulary_path = 'weights/vocabulary.pickle'
 # vocabulary_path = 'E:/MY Projects/Conversational AI system for Academic institute/Student Concern Request management Heroku Deployment/data/vocabulary.pickle'
 
 n_neighbour_weights = 'weights/nearest_neighbour.pickle'
-encoder_dict_path = 'weights/label_encoder dict.pickle'
+encoder_dict_path = 'weights/label_encoder.pickle'
 wordcloud_path = 'data/wordcloud.png'
-data_path = 'data/Student Concerns_5.csv'
+data_path = 'data/Student Concerns_6.csv'
 
-seed = 42
+seed = 1234
 host = '127.0.0.1'
 port = 27017
 database = 'SCRMS'
@@ -26,23 +26,24 @@ live_collection = 'live_concerns'
 username = 'root'
 password = 'root'
 # db_url = 'mongodb://{}:{}@{}:{}/{}?authSource=admin'.format(username, password, host, port, database)
-db_url = "mongodb://localhost:27017/"
+# db_url = "mongodb://localhost:27017/"
+db_url = "mongodb+srv://admin:admin@cluster0.lx3sd.mongodb.net/test"
 
-vocab_size = 1000
+vocab_size = 3000
 max_length = 30
 trunc_type = 'post'
 padding = 'post'
 oov_tok = "<oov>"
 pad_token = '<pad>'
-num_epochs = 20
-batch_size = 32
+num_epochs = 40
+batch_size = 64
 size_lstm1  = 256
 size_lstm2  = 128
 dense1 = 256
 dense2 = 128
 dense3 = 64
-keep_prob = 0.7
+keep_prob = 0.5
 
-test_size = 0.005
+test_size = 0.002
 val_size = 0.15
 n_neighbors = 1

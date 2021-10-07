@@ -9,7 +9,7 @@ logging.getLogger('tensorflow').disabled = True
 from sklearn.neighbors import NearestNeighbors
 from sklearn.model_selection import train_test_split
 from tensorflow.keras.models import load_model
-from tensorflow.keras.layers import Input, LSTM, Dense, Bidirectional, Dropout, BatchNormalization
+from tensorflow.keras.layers import Input, LSTM, Dense, Bidirectional, Dropout, BatchNormalization, GRU
 from tensorflow.keras.models import Model, load_model
 from tensorflow.keras.activations import relu
 
@@ -33,7 +33,7 @@ class SCRM_Model():
         self.X = embedding_concerns
         self.Y = outputs
         self.word2index = word2index
-
+        print(len(self.X))
         X, Xtest, Y, Ytest = train_test_split(
                                             self.X, 
                                             self.Y, 
@@ -52,30 +52,30 @@ class SCRM_Model():
 
         inputs = Input(shape=(max_length,embedding_dim))
         x = Bidirectional(
-                    LSTM(
+                    GRU(
                        size_lstm1,
                        return_sequences=True,
                        unroll=True
                        ), name='bidirectional_lstm1')(inputs) # Bidirectional LSTM layer
         x = Bidirectional(
-                    LSTM(
+                    GRU(
                        size_lstm2,
                        unroll=True
                        ), name='bidirectional_lstm2')(x) # Bidirectional LSTM layer
                        
-        x = Dense(dense1, activation='relu')(x)
+        # x = Dense(dense1, activation='relu')(x)
         x = Dense(dense1)(x) 
         x = BatchNormalization()(x)
         x = relu(x)
         x = Dropout(keep_prob)(x)
 
-        x = Dense(dense2, activation='relu')(x) 
+        # x = Dense(dense2, activation='relu')(x) 
         x = Dense(dense2)(x)
         x = BatchNormalization()(x)
         x = relu(x)
         x = Dropout(keep_prob)(x)
 
-        x = Dense(dense3, activation='relu')(x) 
+        # x = Dense(dense3, activation='relu')(x) 
         x = Dense(dense3, name='features')(x)
         x = BatchNormalization()(x)
         x = relu(x)
@@ -221,5 +221,5 @@ class SCRM_Model():
             self.runTFconverter()
         self.runTFinterpreter()
 
-model = SCRM_Model()
-model.run_classifier()
+# model = SCRM_Model()
+# model.run_classifier()

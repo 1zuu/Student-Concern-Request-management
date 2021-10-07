@@ -85,6 +85,7 @@ def preprocessed_data(concerns):
     return np.array(updated_concerns)
 
 def process_labels(df):
+    print(df.columns.values)
     df_labels = df[['Department', 'Sub_Section', 'Concern_Type']]
     df_labels = df_labels.apply(lambda x: x.astype(str).str.lower())
     df_labels = df_labels.apply(lambda x: x.astype(str).str.strip())
@@ -208,14 +209,17 @@ def connect_mongo():
 def create_database():
 
     db = connect_mongo()
+    print(db)
     if db_collection not in db.list_collection_names():
         coll = db[db_collection]
-        data = pd.read_csv(data_path)
+        data = pd.read_csv(data_path, sep=',')
         data = data.dropna(axis=0)
         payload = json.loads(data.to_json(orient='records'))
         coll.remove()
         coll.insert(payload)
         print('Database created')
+    else:
+        print('Database already exists')
 
 def read_mongo():
     db = connect_mongo()
@@ -236,13 +240,20 @@ def get_data():
     create_database()
 
     data = read_mongo()
-    data = process_labels(data)
+    print(len(data))
 
+    # data = pd.read_csv(data_path)
+    # data = data.dropna(axis=0)
+
+    data = process_labels(data)
+    data = shuffle(data)
+    
     student_concerns = data['Student_Concern'].values
     processed_concerns, embedding_concerns, word2index = text_processing(student_concerns)
     create_wordcloud(processed_concerns)
-
     outputs = data[['Department', 'Sub_Section', 'Concern_Type']].values
     embedding_concerns, outputs = shuffle(embedding_concerns, outputs)
 
     return embedding_concerns, outputs, word2index
+
+get_data()
