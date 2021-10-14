@@ -221,5 +221,5 @@ class SCRM_Model():
             self.runTFconverter()
         self.runTFinterpreter()
 
-# model = SCRM_Model()
-# model.run_classifier()
+model = SCRM_Model()
+model.run_classifier()
